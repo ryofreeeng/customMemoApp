@@ -24,14 +24,14 @@
 
 フォルダを管理するテーブル。自己参照（`parent_id`）によって階層構造を表現する。
 
-| カラム名 | 型 | 制約 | 説明 |
-|---|---|---|---|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 自動採番の一意ID |
-| name | TEXT | NOT NULL | フォルダ名。重複許容 |
-| parent_id | INTEGER | REFERENCES FOLDER(id) | 親フォルダのID。NULLはルート直下 |
-| deleted_at | TEXT | | 削除日時（ISO8601）。NULLなら通常、値があればゴミ箱（ソフトデリート） |
-| created_at | TEXT | NOT NULL | 作成日時（ISO8601） |
-| updated_at | TEXT | NOT NULL | 最終更新日時（ISO8601）。名前変更・移動時に更新 |
+| カラム名 | 型 | 制約 | 説明 | 例 |
+|---|---|---|---|---|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 自動採番の一意ID | `1` |
+| name | TEXT | NOT NULL | フォルダ名。重複許容 | `"仕事メモ"` |
+| parent_id | INTEGER | REFERENCES FOLDER(id) | 親フォルダのID。NULLはルート直下 | `NULL`（ルート直下）/ `2`（id=2のフォルダの中） |
+| deleted_at | TEXT | | 削除日時（ISO8601）。NULLなら通常、値があればゴミ箱（ソフトデリート） | `NULL`（通常）/ `"2024-01-15T10:30:00"`（ゴミ箱） |
+| created_at | TEXT | NOT NULL | 作成日時（ISO8601） | `"2024-01-15T09:00:00"` |
+| updated_at | TEXT | NOT NULL | 最終更新日時（ISO8601）。名前変更・移動時に更新 | `"2024-01-20T14:45:00"` |
 
 ```sql
 CREATE TABLE FOLDER (
@@ -50,14 +50,14 @@ CREATE TABLE FOLDER (
 
 メモを管理するテーブル。`folder_id`で所属フォルダを指す。
 
-| カラム名 | 型 | 制約 | 説明 |
-|---|---|---|---|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 自動採番の一意ID |
-| title | TEXT | NOT NULL | メモタイトル。重複許容 |
-| folder_id | INTEGER | REFERENCES FOLDER(id) | 所属フォルダのID。NULLはルート直下 |
-| deleted_at | TEXT | | 削除日時（ISO8601）。NULLなら通常、値があればゴミ箱（ソフトデリート） |
-| created_at | TEXT | NOT NULL | 作成日時（ISO8601） |
-| updated_at | TEXT | NOT NULL | 最終更新日時（ISO8601）。タイトル変更・移動・段落編集時に更新 |
+| カラム名 | 型 | 制約 | 説明 | 例 |
+|---|---|---|---|---|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 自動採番の一意ID | `1` |
+| title | TEXT | NOT NULL | メモタイトル。重複許容 | `"会議メモ 2024-01-15"` |
+| folder_id | INTEGER | REFERENCES FOLDER(id) | 所属フォルダのID。NULLはルート直下 | `1`（id=1のフォルダに所属） |
+| deleted_at | TEXT | | 削除日時（ISO8601）。NULLなら通常、値があればゴミ箱（ソフトデリート） | `NULL`（通常）/ `"2024-01-15T10:30:00"`（ゴミ箱） |
+| created_at | TEXT | NOT NULL | 作成日時（ISO8601） | `"2024-01-15T10:30:00"` |
+| updated_at | TEXT | NOT NULL | 最終更新日時（ISO8601）。タイトル変更・移動・段落編集時に更新 | `"2024-01-20T14:45:00"` |
 
 ```sql
 CREATE TABLE NOTE (
@@ -105,15 +105,15 @@ ORDER BY updated_at DESC;
 ### 新規フォルダ作成
 
 ```sql
-INSERT INTO FOLDER (name, parent_id, is_deleted, created_at, updated_at)
-VALUES (?, ?, 0, ?, ?);
+INSERT INTO FOLDER (name, parent_id, created_at, updated_at)
+VALUES (?, ?, ?, ?);
 ```
 
 ### 新規メモ作成
 
 ```sql
-INSERT INTO NOTE (title, folder_id, is_deleted, created_at, updated_at)
-VALUES (?, ?, 0, ?, ?);
+INSERT INTO NOTE (title, folder_id, created_at, updated_at)
+VALUES (?, ?, ?, ?);
 ```
 
 ### フォルダの移動
