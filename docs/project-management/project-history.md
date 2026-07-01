@@ -4,6 +4,29 @@
 
 ---
 
+## 現在地と次のアクション
+
+> このセクションは作業のたびに更新する。完了したら打ち消し線か削除。
+
+**現在のフェーズ：詳細設計（第1サイクル）**
+
+### 残タスク
+
+- [ ] 型定義一覧を作成 → `docs/detailed-design/type-definitions.md`
+  - [x] 4カテゴリの方針決定（DBエンティティ型・Props型・UI状態型・ナビゲーション型）
+  - [x] ナビゲーション型 決定済み
+  - [x] UI状態型 決定済み
+  - [ ] Props型 **途中（NoteCardPropsまで完了。FolderCard・MemoListScreen・MoveDestination系が残り）**
+  - [ ] DBエンティティ型（db-access-functions.mdからの流用）
+- [ ] `docs/detailed-design/` フォルダをgitコミット
+- [ ] コンポーネント設計書を作成 → `docs/detailed-design/component-design.md`（**React基礎学習が先**）
+
+### 完了済み（詳細設計フェーズ内）
+
+- [x] DBアクセス関数一覧 → `docs/detailed-design/db-access-functions.md`
+
+---
+
 ## フェーズ1：コンセプト確立・要件定義
 
 - ユーザー（発注者）＆Claude（受注者）のロールプレイ形式で進行

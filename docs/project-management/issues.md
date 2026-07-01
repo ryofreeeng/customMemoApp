@@ -32,3 +32,40 @@
 | # | 課題 | 影響する成果物 | ステータス | 対応内容・メモ |
 |---|------|----------------|------------|----------------|
 | L-1 | インポート機能のデータモデルへの影響が未検討（フォルダ階層マッピング・重複メモの扱い等）。テーブル定義書の制約に影響する可能性あり | テーブル定義書（拡張フェーズ着手前） | 対応中 | **`folder_id` NOT NULL制約との整合方針**：アプリは常にルートフォルダ（ユーザーには見えなくてもDBには存在する）を持つ。インポートしたメモはこのルートフォルダに格納することで制約を満たす。外部アプリの仕様差異（画像添付等）への対応方法は拡張フェーズ着手時に改めて検討。 |
+
+---
+
+## 詳細設計書レビュー（メモ一覧画面のみ・2026-07-01）
+
+発見元：詳細設計レビュー（`detailed-design-reviewer` サブエージェント）  
+対象：`docs/detailed-design/` 配下の4ファイル（型定義一覧・DBアクセス関数一覧・コンポーネント設計書・コーディング規約）  
+⚠️ このレビュー結果は実装後に振り返り用として残す。現時点では対応しないまま実装に進む方針。
+
+### 深刻度：高（実装前に解決が必要）
+
+| # | 課題 | 対象ファイル | ステータス | 内容・改善案 |
+|---|------|------------|------------|-------------|
+| D-H-1 | Props型セクションが空欄のまま | `type-definitions.md` | 未対応 | `component-design.md`でpropsが詳細設計されているが、`type-definitions.md`の「2. Props型」は「後続で定義予定」のまま未記入。実装者は2ファイルを行き来することになり、どちらが正規の定義か混乱する。対応：component-design.mdで確定したpropsをtype-definitions.mdのProps型セクションに転記する |
+| D-H-2 | `Tag`型が未定義なのにコンポーネント設計書で使用 | `component-design.md`、`type-definitions.md` | 未対応 | `SwipeableRow`のpropsに`tags: Tag[]`があるが、`Tag`型はtype-definitions.mdに存在しない。第1サイクルにTAGテーブルはなく、このまま実装するとTypeScriptコンパイルエラーが即発生。対応：第1サイクルではtags propsを除去するか、暫定型を定義する（方針要確認） |
+| D-H-3 | `handleLongPress`がローカル関数一覧に存在しない | `component-design.md` | 未対応 | FolderCard/NoteCardのpropsに`onLongPress`があるが、MemoListScreenのローカル関数表に対応関数がない。誰が長押しを処理するか追えない。対応：`handleLongPress(item)` をローカル関数一覧に追記 |
+| D-H-4 | `onLongPress`がItemListのpropsに存在しない | `component-design.md` | 未対応 | FolderCard/NoteCardが`onLongPress`を受け取るのに、その親であるItemListのprops一覧に`onLongPress`がない。バケツリレーが途切れている。対応：ItemListのpropsに`onLongPress: (item: Folder \| Note) => void`を追記 |
+
+### 深刻度：中（解決が望ましい）
+
+| # | 課題 | 対象ファイル | ステータス | 内容・改善案 |
+|---|------|------------|------------|-------------|
+| D-M-1 | `folderId`の受け取り方（props直接 vs `useRoute()`）が不明 | `component-design.md` | 未対応 | React Navigationでは`route.params.folderId`として取得するのが慣習だが、設計書ではpropsとして受け取るように読める。`useRoute<RouteProp<RootStackParamList, 'MemoList'>>()`を使用する旨を補足する |
+| D-M-2 | `folderId=1`（ルートフォルダ）と`null`（DBの`IS NULL`）の変換ルール不明 | `db-access-functions.md`、`component-design.md` | 未対応 | ナビゲーション型ではfolderId=numberだが、`getFolderContents`は`number \| null`を受け取る。ルートフォルダ表示時の変換ルールと、DBシードデータ（id=1のルートフォルダ）の方針が未明示 |
+| D-M-3 | 通常モードの「移動」と選択モードの「一括移動」が同じprops名 | `component-design.md` | 未対応 | BottomBarの`onMovePress`が通常時と選択モード時で別の処理（`handleMoveItem` vs `handleBulkMove`）に切り替わるが、設計書に明記がない。modeによる切り替えロジックを補足する |
+| D-M-4 | 削除取り消しトースト（5秒間）の管理コンポーネントが不明 | `component-design.md` | 未対応 | `memo-list.md`にトースト表示仕様があるが、component-design.mdにはトーストstateを誰が管理するかの記載がない |
+
+### 深刻度：低（次サイクル以降でよい）
+
+| # | 課題 | 対象ファイル | ステータス | 内容・改善案 |
+|---|------|------------|------------|-------------|
+| D-L-1 | `NOTE.folder_id`のNOT NULL制約がDBスキーマに未反映 | `db-access-functions.md`、`table-definition.md` | 未対応 | メモは必ずフォルダに属する（H-1決定）と合わせてNOT NULL制約をテーブル定義書に追加すべき |
+| D-L-2 | ファイル・ディレクトリ構成の規約がない | `coding-conventions.md` | 未対応 | コンポーネントファイルのパス（`src/components/FolderCard.tsx` vs `src/components/FolderCard/index.tsx`等）の方針が未記載 |
+
+### 良い点
+
+- 補足1〜5で「なぜこの設計にしたか」という根拠まで記述されている点は優秀。特に補足2（selectedIdsの置き場所の理由）と補足4（継承でなくコンポジション）はReactの設計思想を正しく反映しており、後からメンテナンスするときに価値を発揮する。
